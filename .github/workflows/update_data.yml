@@ -2,36 +2,43 @@ name: Update Excel Data
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Runs hourly
-  workflow_dispatch:     # Manual triggers
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write    # Required for force push
+      contents: write  # Must have write permissions
 
     steps:
-      - name: Checkout repo
+      - name: Checkout with full history
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history needed for force push
+          fetch-depth: 0  # Get complete git history
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download from OneDrive
+      - name: Download file
         run: |
-          curl -L "https://1drv.ms/x/c/84f8e4c03894c416/EUFA16pIFbFJrB19zt_hjjEBuSAEjpCK16SP57kxsguI-g?e=a7mB6R&download=1" -o local.xlsx || echo "Download failed"
+          curl -L "YOUR_ONEDRIVE_LINK" -o local.xlsx || echo "Download failed"
 
-      - name: Force update
+      - name: Force update repository
         run: |
+          # Configure git
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
+          
+          # Reset to remote state (critical step)
+          git fetch origin
+          git reset --hard origin/main
+          
+          # Stage changes
           git add local.xlsx
           
-          # Always commit (even if empty)
-          git commit --allow-empty -m "Auto-update: $(date +'%Y-%m-%d %H:%M')" || echo "No changes"
+          # Create commit (allow empty)
+          git commit --allow-empty -m "Auto-update: $(date +'%Y-%m-%d %H:%M')"
           
-          # Safe force push
+          # Force push with lease protection
           git push origin main --force-with-lease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
