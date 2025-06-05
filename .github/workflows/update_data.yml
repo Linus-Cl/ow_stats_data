@@ -1,0 +1,27 @@
+name: Update Excel Data
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Runs hourly at :00
+  workflow_dispatch:     # Allow manual triggers
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        
+      - name: Download from OneDrive
+        run: |
+          curl -L "https://1drv.ms/x/c/52e69849288833a4/EcGhp7beEihJvXlvTDTu7TcBSwvjQkkS4fvYQubSeZHOPQ?e=i5DM9K&download=1" -o local.xlsx
+          # If needing authentication:
+          # curl -H "Authorization: Bearer ${{ secrets.ONEDRIVE_TOKEN }}" -L "ONEDRIVE_API_URL" -o local.xlsx
+          
+      - name: Commit changes
+        run: |
+          git config --global user.name "Automated Updater"
+          git config --global user.email "actions@users.noreply.github.com"
+          git add local.xlsx
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M')"
+          git push
