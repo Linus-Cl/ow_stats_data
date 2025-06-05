@@ -2,25 +2,26 @@ name: Update Excel Data
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Runs hourly at :00
-  workflow_dispatch:     # Allow manual triggers
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write    # Required to push changes
-      
+      contents: write  # Critical for private repos
+    
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Needed for proper git history
-          
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}  # Add this line
+
       - name: Download from OneDrive
         run: |
-          curl -L "https://1drv.ms/x/c/84f8e4c03894c416/EUFA16pIFbFJrB19zt_hjjEBuSAEjpCK16SP57kxsguI-g?e=a7mB6R&download=1" -o local.xlsx
-          
+          curl -L "YOUR_ONEDRIVE_LINK" -o local.xlsx
+
       - name: Commit and push changes
         run: |
           git config --global user.name "GitHub Actions"
@@ -28,11 +29,11 @@ jobs:
           git add local.xlsx
           
           # Only commit if file changed
-          if git diff-index --quiet HEAD --; then
-            echo "No changes detected"
-          else
+          if ! git diff-index --quiet HEAD --; then
             git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M')"
             git push origin main
+          else
+            echo "No changes detected"
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatic authentication
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Proper authentication
