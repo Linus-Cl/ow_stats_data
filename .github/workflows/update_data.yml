@@ -20,7 +20,7 @@ jobs:
 
       - name: Download file
         run: |
-          curl -L "YOUR_ONEDRIVE_LINK" -o local.xlsx || echo "Download failed"
+          curl -L "https://1drv.ms/x/c/84f8e4c03894c416/EUFA16pIFbFJrB19zt_hjjEBuSAEjpCK16SP57kxsguI-g?e=ZyyWOh&download=1" -o local.xlsx || echo "Download failed"
 
       - name: Force update repository
         run: |
