@@ -8,20 +8,31 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write    # Required to push changes
+      
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        
+        with:
+          fetch-depth: 0  # Needed for proper git history
+          
       - name: Download from OneDrive
         run: |
           curl -L "https://1drv.ms/x/c/84f8e4c03894c416/EUFA16pIFbFJrB19zt_hjjEBuSAEjpCK16SP57kxsguI-g?e=a7mB6R&download=1" -o local.xlsx
-          # If needing authentication:
-          # curl -H "Authorization: Bearer ${{ secrets.ONEDRIVE_TOKEN }}" -L "ONEDRIVE_API_URL" -o local.xlsx
           
-      - name: Commit changes
+      - name: Commit and push changes
         run: |
-          git config --global user.name "Automated Updater"
-          git config --global user.email "actions@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
           git add local.xlsx
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M')"
-          git push
+          
+          # Only commit if file changed
+          if git diff-index --quiet HEAD --; then
+            echo "No changes detected"
+          else
+            git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M')"
+            git push origin main
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatic authentication
