@@ -2,42 +2,36 @@ name: Update Excel Data
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Hourly updates
-  workflow_dispatch:
+    - cron: '0 * * * *'  # Runs hourly
+  workflow_dispatch:     # Manual triggers
 
 jobs:
   update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write    # Required for force push
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Full history needed for force push
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download from OneDrive
         run: |
-          curl -L "https://1drv.ms/x/c/84f8e4c03894c416/EUFA16pIFbFJrB19zt_hjjEBuSAEjpCK16SP57kxsguI-g?e=a7mB6R&download=1" -o local.xlsx
+          curl -L "https://1drv.ms/x/c/84f8e4c03894c416/EUFA16pIFbFJrB19zt_hjjEBuSAEjpCK16SP57kxsguI-g?e=a7mB6R&download=1" -o local.xlsx || echo "Download failed"
 
-      - name: Commit and push changes
+      - name: Force update
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          
-          # Pull latest changes first
-          git pull origin main
-          
           git add local.xlsx
           
-          # Only commit if file changed
-          if ! git diff-index --quiet HEAD --; then
-            git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M')"
-            git push origin main
-          else
-            echo "No changes detected"
-          fi
+          # Always commit (even if empty)
+          git commit --allow-empty -m "Auto-update: $(date +'%Y-%m-%d %H:%M')" || echo "No changes"
+          
+          # Safe force push
+          git push origin main --force-with-lease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
